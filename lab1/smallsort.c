@@ -10,6 +10,7 @@ void main() {
     f = fopen("smallsort.in", "r");
     fscanf_s(f, "%d", &n);
      
+        
     for (i = 0; i < n; i++) {
         fscanf_s(f, "%d", &a[i]);
     }
