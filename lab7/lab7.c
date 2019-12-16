@@ -10,7 +10,6 @@ enum {
 };
  
 int task = TASK_A;
- 
 struct node {
     int num;
     int value;
