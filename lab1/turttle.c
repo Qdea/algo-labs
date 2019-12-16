@@ -3,7 +3,6 @@
 #define MaxN 1000
 int a[MaxN][MaxN];
 long long b[MaxN][MaxN];
-
 void main() {
 	FILE* f;
 	int h, w, x, y;
