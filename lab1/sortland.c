@@ -5,6 +5,7 @@
 float a[N];
 int b[N];
 bool debug = false;
+
 void main() {
     FILE* f;
     int n = 3, j, i;
