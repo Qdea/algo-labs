@@ -27,6 +27,7 @@ void main() {
                 printf("%d ", a[k]);
             printf(", %d < %d ? \n", key, a[i]);
         }
+        
         while (i >= 0 && key < a[i]) {
             a[i + 1] = a[i];
             if (debug) {
