@@ -1,0 +1,211 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+ 
+#define BITS1 10
+#define BITS2 10
+ 
+FILE * out;
+ 
+struct node {
+    char key[21];
+    char val[21];
+    struct node* next;
+};
+ 
+struct node* a[1 << BITS1][1 << BITS2];
+ 
+unsigned int inthash(unsigned int key, int b)
+{
+    key += (key << 12);
+    key ^= (key >> 22);
+    key += (key << 4);
+    key ^= (key >> 9);
+    key += (key << 10);
+    key ^= (key >> 2);
+    key += (key << 7);
+    key ^= (key >> 12);
+    key = (key & ((1 << b) - 1));
+    return key;
+}
+ 
+unsigned int strhash(char key[21], int b)
+{
+    char* s = key;
+    int r = 0;
+    int k = 0;
+    int m = 0;
+    while (*s != '\0') {
+        if (*s >= 'a' && *s <= 'z') {
+            k = (k << 6) + (*s - 'a');
+        }
+        else if (*s >= 'A' && *s <= 'Z') {
+            k = (k << 6) + 32 + (*s - 'A');
+        }
+        m++;
+        if (m == 4) {
+            r = (r << 7) + inthash(k, 20);
+            k = 0;
+            m = 0;
+        }
+        s++;
+    }
+    if (m > 0) {
+        r = (r << 7) + inthash(k, 20);
+    }
+    return inthash(r, b);
+}
+ 
+void put(char key[21], char val[21])
+{
+    struct node** n;
+    unsigned int hash1 = strhash(key, BITS1);
+    unsigned int hash2 = strhash(val, BITS2);
+    n = &a[hash1][hash2];
+    while (*n != 0) {
+        if (strcmp((**n).key, key) == 0 && strcmp((**n).val, val) == 0) {
+            return;
+        }
+        n = &((**n).next);
+    }
+    *n = malloc(sizeof(struct node));
+    strcpy((**n).key, key);
+    strcpy((**n).val, val);
+    (**n).next = 0;
+}
+ 
+void get(char key[21])
+{
+    struct node* n;
+    unsigned int hash1 = strhash(key, BITS1);
+ 
+    int count = 0;
+    for (int i = 0; i < 2; i++) {
+        for (int hash2 = 0; hash2 < (1 << BITS2); hash2++) {
+            n = a[hash1][hash2];
+            while (n != 0) {
+                if (strcmp((*n).key, key) == 0) {
+                    if (i == 0) {
+                        count++;
+                    }
+                    else {
+                        fprintf(out, " %s", (*n).val);
+                    }
+                }
+                n = (*n).next;
+            }
+        }
+        if (i == 0) {
+            fprintf(out, "%d", count);
+        }
+        else {
+            fprintf(out, "\n");
+        }
+    }
+}
+ 
+void deleteall(char key[21])
+{
+    struct node* p;
+    struct node* t;
+    struct node* n;
+    unsigned int hash1 = strhash(key, BITS1);
+ 
+    int count = 0;
+    for (int hash2 = 0; hash2 < (1 << BITS2); hash2++) {
+        p = 0;
+        n = a[hash1][hash2];
+        while (n != 0) {
+            if (strcmp((*n).key, key) == 0) {
+                if (p != 0) {
+                    (*p).next = (*n).next;
+                }
+                else {
+                    a[hash1][hash2] = (*n).next;
+                }
+                t = (*n).next;
+                free(n);
+                n = t;
+            }
+            else {
+                p = n;
+                n = (*n).next;
+            }
+        }
+    }
+}
+ 
+void delete(char key[21], char val[21])
+{
+    struct node* n;
+    struct node* p;
+    unsigned int hash1 = strhash(key, BITS1);
+    unsigned int hash2 = strhash(val, BITS2);
+    p = 0;
+    n = a[hash1][hash2];
+    while (n != 0) {
+        if (strcmp((*n).key, key) == 0 && strcmp((*n).val, val) == 0) {
+            if (p != 0) {
+                (*p).next = (*n).next;
+            }
+            else {
+                a[hash1][hash2] = (*n).next;
+            }
+            free(n);
+            return;
+        }
+        p = n;
+        n = (*n).next;
+    }
+}
+ 
+void main()
+{
+    char cmd[10];
+    char key[21];
+    char val[21];
+    int ok;
+    FILE* f;
+ 
+    out = fopen("multimap.out", "w");
+    f = fopen("multimap.in", "r");
+ 
+    for (int i = 0; i < (1 << BITS1); i++) {
+        for (int j = 0; j < (1 << BITS2); j++) {
+            a[i][j] = 0;
+        }
+    }
+ 
+    do {
+        ok = 0;
+        fscanf(f, "%s", cmd);
+        if (strcmp(cmd, "put") == 0) {
+            ok = 1;
+            fscanf(f, "%s %s", key, val);
+            put(key, val);
+        }
+        else
+            if (strcmp(cmd, "get") == 0) {
+                ok = 1;
+                fscanf(f, "%s", key);
+                get(key);
+            }
+            else
+                if (strcmp(cmd, "delete") == 0) {
+                    ok = 1;
+                    fscanf(f, "%s %s", key, val);
+                    delete(key, val);
+                }
+                else
+                    if (strcmp(cmd, "deleteall") == 0) {
+                        ok = 1;
+                        fscanf(f, "%s", key);
+                        deleteall(key);
+                    }
+        cmd[0] = '\0';
+    } while (ok);
+ 
+    fclose(f);
+    fclose(out);
+}
